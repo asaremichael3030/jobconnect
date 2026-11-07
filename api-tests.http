@@ -1,0 +1,31 @@
+### Health check
+GET http://localhost:5000/api/health
+
+### Login as admin
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@jobconnect.dev",
+  "password": "admin123"
+}
+
+### Login as job seeker
+POST http://localhost:5000/api/auth/login
+Content-Type: application/json
+
+{
+  "email": "michael@example.com",
+  "password": "secret123"
+}
+
+### Admin ping WITH admin token
+GET http://localhost:5000/api/admin/ping
+Authorization: Bearer PASTE_ADMIN_TOKEN_HERE
+
+### Admin ping WITH seeker token
+GET http://localhost:5000/api/admin/ping
+Authorization: Bearer PASTE_SEEKER_TOKEN_HERE
+
+### Admin ping WITHOUT token
+GET http://localhost:5000/api/admin/ping

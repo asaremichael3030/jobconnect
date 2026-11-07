@@ -1,0 +1,26 @@
+# Node
+node_modules/
+dist/
+build/
+npm-debug.log*
+
+# Environment variables (DO NOT PUSH SECRETS)
+.env
+.env.local
+.env.*.local
+
+# Flutter
+frontend/build/
+frontend/.dart_tool/
+frontend/.packages
+frontend/.flutter-plugins
+
+# IDE & OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Uploads (Keep folder, ignore files)
+backend/uploads/*
+!backend/uploads/.gitkeep
