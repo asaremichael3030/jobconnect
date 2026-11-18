@@ -26,7 +26,7 @@ export function createApp(): Express {
 
   app.use(helmet({ crossOriginResourcePolicy: false }));
   app.use(cors({
-  origin: 'https://https://monumental-lebkuchen-965042.netlify.app/',
+  origin: 'https://jobconnect11.netlify.app',
   credentials: true
 }));
   app.use(express.json());
