@@ -26,7 +26,11 @@ export function createApp(): Express {
 
   app.use(helmet({ crossOriginResourcePolicy: false }));
     app.use(cors({
-    origin: 'https://startling-melba-f3344a.netlify.app',
+    origin: [
+      'https://startling-melba-f3344a.netlify.app', 
+      'http://localhost:5000', 
+      'http://localhost:8080' 
+    ],
     credentials: true
   }));
   app.use(express.json());
