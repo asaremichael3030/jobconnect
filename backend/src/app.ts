@@ -25,7 +25,10 @@ export function createApp(): Express {
   const app = express();
 
   app.use(helmet({ crossOriginResourcePolicy: false }));
-  app.use(cors());
+    app.use(cors({
+    origin: 'https://startling-melba-f3344a.netlify.app',
+    credentials: true
+  }));
   app.use(express.json());
 
   app.get('/api/health', (_req, res) => {
