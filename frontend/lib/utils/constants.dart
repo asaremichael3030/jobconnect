@@ -4,7 +4,7 @@ class ApiConstants {
   // Android emulator uses 10.0.2.2 instead of localhost.
   // iOS simulator, Chrome, and desktop all use localhost.
   // On a physical device, replace with your computer's LAN IP.
-  static const String baseUrl = 'http://localhost:5000';
+ static const String baseUrl = 'https://jobconnect-api-8q1e.onrender.com';
 
   // Auth
   static const String register = '/api/auth/register';
