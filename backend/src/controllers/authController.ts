@@ -5,8 +5,12 @@ import {
   createUser,
   findUserByEmail,
   findUserById,
+  saveResetToken,
+  findUserByResetToken,
+  updateUserPassword,
 } from '../models/userModel';
-import { signToken } from '../utils/jwt';
+import { sendPasswordResetEmail } from '../services/emailService';
+import { signToken, verifyToken } from '../utils/jwt';
 import { hashPassword, verifyPassword } from '../utils/password';
 import { failure, success } from '../utils/response';
 
@@ -169,6 +173,74 @@ export async function getMe(
         role: user.role,
       },
     });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function forgotPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      failure(res, 'Email is required', 400);
+      return;
+    }
+
+    const user = await findUserByEmail(email.toLowerCase().trim());
+    if (!user) {
+      // We return success even if the email doesn't exist to prevent user enumeration
+      success(res, { message: 'If an account exists, a reset link has been sent.' });
+      return;
+    }
+
+    // Generate a secure JWT reset token valid for 1 hour
+    const resetToken = signToken({ id: user.id, role: 'RESET' as any });
+    const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+    await saveResetToken(user.id, resetToken, expiresAt);
+    await sendPasswordResetEmail(user.email, resetToken);
+
+    success(res, { message: 'If an account exists, a reset link has been sent.' });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function resetPassword(
+  req: Request,
+  res: Response,
+  next: NextFunction,
+): Promise<void> {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword || newPassword.length < 6) {
+      failure(res, 'Valid token and password (min 6 chars) are required', 400);
+      return;
+    }
+
+    // Verify the JWT token signature
+    try {
+      verifyToken(token);
+    } catch (e) {
+      failure(res, 'Invalid or expired token', 400);
+      return;
+    }
+
+    const user = await findUserByResetToken(token);
+    if (!user) {
+      failure(res, 'Invalid or expired token', 400);
+      return;
+    }
+
+    const passwordHash = await hashPassword(newPassword);
+    await updateUserPassword(user.id, passwordHash);
+
+    success(res, { message: 'Password reset successfully. You can now log in.' });
   } catch (error) {
     next(error);
   }

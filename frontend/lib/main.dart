@@ -3,17 +3,18 @@ import 'package:flutter/material.dart';
 import 'screens/admin/admin_home.dart';
 import 'screens/auth/login_screen.dart';
 import 'screens/auth/register_screen.dart';
+import 'screens/auth/reset_password_screen.dart';
+import 'screens/employer/create_job_screen.dart';
 import 'screens/employer/employer_home.dart';
 import 'screens/job_seeker/job_seeker_home.dart';
 import 'screens/jobs/job_search_screen.dart';
 import 'screens/profile/company_profile_screen.dart';
 import 'screens/profile/seeker_profile_screen.dart';
+import 'screens/notifications/notifications_screen.dart';
 import 'services/auth_service.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_text_styles.dart';
 import 'theme/app_theme.dart';
-import 'screens/employer/create_job_screen.dart';
-import 'screens/notifications/notifications_screen.dart';
 
 void main() {
   runApp(const JobConnectApp());
@@ -29,6 +30,18 @@ class JobConnectApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       initialRoute: '/',
+      onGenerateRoute: (settings) {
+        // Handle deep link from password reset email
+        // The email link looks like: https://jobconnect11.netlify.app/#/reset-password?token=eyJ...
+        if (settings.name != null && settings.name!.startsWith('/reset-password')) {
+          final uri = Uri.parse(settings.name!);
+          final token = uri.queryParameters['token'];
+          return MaterialPageRoute(
+            builder: (_) => ResetPasswordScreen(token: token ?? ''),
+          );
+        }
+        return null;
+      },
       routes: {
         '/': (context) => const SplashScreen(),
         '/login': (context) => const LoginScreen(),

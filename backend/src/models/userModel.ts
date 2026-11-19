@@ -16,6 +16,8 @@ export interface UserRecord {
   status: string;
   created_at: Date;
   updated_at: Date;
+  reset_password_token?: string | null;
+  reset_password_expires?: Date | null;
 }
 
 export async function findUserByEmail(
@@ -57,5 +59,36 @@ export async function updateUserName(
   await pool.query(
     'UPDATE users SET name = $1, updated_at = NOW() WHERE id = $2',
     [name, userId],
+  );
+}
+
+export async function saveResetToken(
+  userId: number,
+  token: string,
+  expiresAt: Date,
+): Promise<void> {
+  await pool.query(
+    'UPDATE users SET reset_password_token = $1, reset_password_expires = $2 WHERE id = $3',
+    [token, expiresAt, userId],
+  );
+}
+
+export async function findUserByResetToken(
+  token: string,
+): Promise<UserRecord | null> {
+  const result = await pool.query<UserRecord>(
+    'SELECT * FROM users WHERE reset_password_token = $1 AND reset_password_expires > NOW()',
+    [token],
+  );
+  return result.rows[0] ?? null;
+}
+
+export async function updateUserPassword(
+  userId: number,
+  passwordHash: string,
+): Promise<void> {
+  await pool.query(
+    'UPDATE users SET password_hash = $1, reset_password_token = NULL, reset_password_expires = NULL WHERE id = $2',
+    [passwordHash, userId],
   );
 }

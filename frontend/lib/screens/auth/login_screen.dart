@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../../services/api_service.dart';
 import '../../services/auth_service.dart';
 import '../../theme/app_colors.dart';
 import '../../theme/app_text_styles.dart';
@@ -71,42 +72,52 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _showForgotPasswordDialog() {
     final resetEmailController = TextEditingController();
+    bool dialogLoading = false;
+
     showDialog(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Reset Password'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Text('Enter your email address and we will send you a link to reset your password.'),
-            const SizedBox(height: 16),
-            TextField(
-              controller: resetEmailController,
-              decoration: const InputDecoration(
-                hintText: 'you@example.com',
-                border: OutlineInputBorder(),
-              ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          title: const Text('Reset Password'),
+          content: TextField(
+            controller: resetEmailController,
+            decoration: const InputDecoration(
+              hintText: 'you@example.com',
+              border: OutlineInputBorder(),
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: dialogLoading ? null : () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: dialogLoading
+                  ? null
+                  : () async {
+                      setDialogState(() => dialogLoading = true);
+                      
+                      final res = await ApiService.post(
+                        '/api/auth/forgot-password',
+                        {'email': resetEmailController.text.trim()},
+                      );
+                      
+                      if (!context.mounted) return;
+                      Navigator.pop(context); // Close dialog
+                      
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(res.message ?? 'If an account exists, a reset link has been sent.'),
+                          backgroundColor: res.success ? AppColors.success : AppColors.danger,
+                        ),
+                      );
+                    },
+              child: dialogLoading
+                  ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
+                  : const Text('Send Link'),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Cancel'),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Simulated: Password reset link sent to email!'),
-                  backgroundColor: AppColors.success,
-                ),
-              );
-            },
-            child: const Text('Send Link'),
-          ),
-        ],
       ),
     );
   }
@@ -194,7 +205,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         Align(
                           alignment: Alignment.centerRight,
                           child: TextButton(
-                            onPressed: _showForgotPasswordDialog, // <-- WIRED UP
+                            onPressed: _showForgotPasswordDialog,
                             child: Text(
                               'Forgot password?',
                               style: AppTextStyles.bodyMuted.copyWith(
