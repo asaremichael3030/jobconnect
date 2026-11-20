@@ -21,7 +21,7 @@ class ApplicantDetailCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -31,6 +31,7 @@ class ApplicantDetailCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _avatar(),
               const SizedBox(width: 12),
@@ -40,15 +41,23 @@ class ApplicantDetailCard extends StatelessWidget {
                   children: [
                     Text(
                       application.applicantName.isEmpty ? 'Applicant' : application.applicantName,
-                      style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600, fontSize: 14),
+                      style: AppTextStyles.body.copyWith(fontWeight: FontWeight.w600, fontSize: 15),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      application.applicantHeadline.isEmpty ? application.applicantEmail : application.applicantHeadline,
-                      style: AppTextStyles.small.copyWith(fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      application.applicantHeadline.isEmpty ? 'No headline provided' : application.applicantHeadline,
+                      style: AppTextStyles.small.copyWith(fontSize: 13, color: AppColors.primary),
                     ),
+                    if (application.applicantLocation.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Row(
+                        children: [
+                          const Icon(Icons.location_on_outlined, size: 12, color: AppColors.textMuted),
+                          const SizedBox(width: 4),
+                          Text(application.applicantLocation, style: AppTextStyles.small.copyWith(fontSize: 11)),
+                        ],
+                      ),
+                    ]
                   ],
                 ),
               ),
@@ -68,37 +77,47 @@ class ApplicantDetailCard extends StatelessWidget {
               ),
             ),
           ],
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           
-          // NEW: View CV Button
-          if (application.resumeUrl != null && application.resumeUrl!.isNotEmpty)
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: () async {
-                  final url = Uri.parse(application.resumeUrl!);
-                  if (await canLaunchUrl(url)) {
-                    await launchUrl(url, mode: LaunchMode.externalApplication);
-                  } else {
-                    if (context.mounted) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open CV')));
-                    }
-                  }
-                },
-                icon: const Icon(Icons.picture_as_pdf, size: 18),
-                label: const Text('View Applicant CV'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: AppColors.primary,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                ),
+          // CV Button (Only shows if they uploaded one)
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: (application.resumeUrl == null || application.resumeUrl!.isEmpty)
+                  ? null // Disabled if no CV
+                  : () async {
+                      final url = Uri.parse(application.resumeUrl!);
+                      if (await canLaunchUrl(url)) {
+                        await launchUrl(url, mode: LaunchMode.externalApplication);
+                      } else {
+                        if (context.mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Could not open CV')));
+                        }
+                      }
+                    },
+              icon: const Icon(Icons.picture_as_pdf, size: 18),
+              label: Text(
+                (application.resumeUrl == null || application.resumeUrl!.isEmpty)
+                    ? 'No CV Uploaded'
+                    : 'View Applicant CV',
+              ),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: (application.resumeUrl == null || application.resumeUrl!.isEmpty) ? AppColors.textMuted : AppColors.primary,
+                side: BorderSide(color: (application.resumeUrl == null || application.resumeUrl!.isEmpty) ? AppColors.border : AppColors.primary),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
               ),
             ),
+          ),
           
+          const SizedBox(height: 16),
+          const Divider(height: 1, color: AppColors.divider),
           const SizedBox(height: 12),
+          
+          // Status Dropdown
           Row(
             children: [
-              Text('Status', style: AppTextStyles.small.copyWith(fontSize: 12)),
-              const SizedBox(width: 10),
+              Text('Update Status:', style: AppTextStyles.small.copyWith(fontSize: 12, fontWeight: FontWeight.w600)),
+              const SizedBox(width: 12),
               Expanded(
                 child: DropdownButtonFormField<String>(
                   initialValue: application.status,
