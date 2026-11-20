@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../models/job_posting.dart';
 import '../../services/auth_service.dart';
+import '../../services/company_service.dart';
 import '../../services/job_service.dart';
 import '../../services/notification_service.dart';
 import '../../theme/app_colors.dart';
@@ -22,6 +23,7 @@ class EmployerHome extends StatefulWidget {
 class _EmployerHomeState extends State<EmployerHome> {
   int _currentIndex = 0;
 
+  String? _companyName;
   List<JobPosting> _myPostings = [];
   int _unreadNotifications = 0;
   bool _loadingJobs = true;
@@ -30,8 +32,16 @@ class _EmployerHomeState extends State<EmployerHome> {
   @override
   void initState() {
     super.initState();
+    _loadCompanyName();
     _loadMyJobs();
     _loadUnreadCount();
+  }
+
+  Future<void> _loadCompanyName() async {
+    final result = await CompanyService.fetchMyCompany();
+    if (mounted && result.success && result.company != null) {
+      setState(() => _companyName = result.company!.name);
+    }
   }
 
   Future<void> _loadMyJobs() async {
@@ -207,7 +217,7 @@ class _EmployerHomeState extends State<EmployerHome> {
                     _analyticsRow(
                       Icons.people_outline,
                       'Total Applicants',
-                      '0', // Will be dynamic in a future update
+                      '0',
                       AppColors.success,
                     ),
                     const Divider(height: 24),
@@ -258,7 +268,8 @@ class _EmployerHomeState extends State<EmployerHome> {
                   onPressed: () async {
                     await Navigator.pushNamed(context, '/company-profile');
                     if (!mounted) return;
-                    await _loadMyJobs(); // Refresh dashboard if company was created
+                    await _loadCompanyName();
+                    await _loadMyJobs();
                   },
                   icon: const Icon(Icons.domain),
                   label: const Text('My Company Profile'),
@@ -482,7 +493,7 @@ class _EmployerHomeState extends State<EmployerHome> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, TechCorp Ltd.',
+                      'Hello, ${_companyName ?? 'Employer'}',
                       style: AppTextStyles.h2.copyWith(color: Colors.white),
                     ),
                     const SizedBox(height: 4),

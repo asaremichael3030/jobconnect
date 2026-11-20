@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../models/job.dart';
+import '../../services/auth_service.dart';
 import '../../services/job_service.dart';
 import '../../services/notification_service.dart';
 import '../../services/saved_job_service.dart';
@@ -25,6 +26,7 @@ class JobSeekerHome extends StatefulWidget {
 class _JobSeekerHomeState extends State<JobSeekerHome> {
   int _currentIndex = 0;
 
+  String? _userName;
   List<Job> _recommendedJobs = [];
   List<Job> _recentJobs = [];
   int _totalJobs = 0;
@@ -36,8 +38,16 @@ class _JobSeekerHomeState extends State<JobSeekerHome> {
   @override
   void initState() {
     super.initState();
+    _loadUserName();
     _loadJobs();
     _loadUnreadCount();
+  }
+
+  Future<void> _loadUserName() async {
+    final name = await AuthService.readName();
+    if (mounted) {
+      setState(() => _userName = name);
+    }
   }
 
   Future<void> _loadJobs() async {
@@ -317,7 +327,7 @@ class _JobSeekerHomeState extends State<JobSeekerHome> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Hello, Michael',
+                      'Hello, ${_userName ?? 'User'}',
                       style: AppTextStyles.h2.copyWith(color: Colors.white),
                     ),
                     const SizedBox(height: 4),
