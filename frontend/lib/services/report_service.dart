@@ -28,10 +28,14 @@ class ReportService {
 
   static Future<List<Report>> fetchReports() async {
     final token = await AuthService.readToken();
-    if (token == null) return [];
+    if (token == null) throw Exception('Not authenticated');
 
     final response = await ApiService.get(ApiConstants.adminReports, token: token);
-    if (!response.success) return [];
+    
+    // THROW AN ERROR IF THE BACKEND FAILED
+    if (!response.success) {
+      throw Exception(response.message ?? 'Failed to load reports from server');
+    }
 
     final list = (response.data as Map<String, dynamic>)['reports'] as List<dynamic>? ?? [];
     return list.map((r) => Report.fromJson(r as Map<String, dynamic>)).toList();
