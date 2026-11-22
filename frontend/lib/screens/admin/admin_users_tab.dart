@@ -56,6 +56,10 @@ class _AdminUsersTabState extends State<AdminUsersTab> {
       return const Center(child: CircularProgressIndicator(color: AppColors.primary));
     }
 
+    if (_users.isEmpty) {
+      return const Center(child: Text('No users found.'));
+    }
+
     return RefreshIndicator(
       onRefresh: _load,
       color: AppColors.primary,
