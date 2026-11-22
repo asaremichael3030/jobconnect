@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 
 import '../../models/job.dart';
 import '../../services/application_service.dart';
@@ -12,7 +13,6 @@ import '../../widgets/report_dialog.dart';
 
 class JobDetailsScreen extends StatefulWidget {
   final int jobId;
-
   const JobDetailsScreen({super.key, required this.jobId});
 
   @override
@@ -22,7 +22,6 @@ class JobDetailsScreen extends StatefulWidget {
 class _JobDetailsScreenState extends State<JobDetailsScreen>
     with SingleTickerProviderStateMixin {
   late final TabController _tabController;
-
   Job? _job;
   Map<String, dynamic>? _company;
   bool _loading = true;
@@ -53,7 +52,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
 
     final token = await AuthService.readToken();
     final role = await AuthService.readRole();
-
     final result = await JobService.fetchJobById(widget.jobId);
 
     if (!mounted) return;
@@ -73,15 +71,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
 
   Future<void> _submitApplication() async {
     setState(() => _applying = true);
-
     final result = await ApplicationService.apply(widget.jobId);
-
     if (!mounted) return;
     setState(() {
       _applying = false;
-      if (result.success) {
-        _hasApplied = true;
-      }
+      if (result.success) _hasApplied = true;
     });
 
     if (result.success) {
@@ -100,7 +94,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
 
   Future<void> _toggleSave() async {
     final wasSaved = _hasSaved;
-
     setState(() => _hasSaved = !wasSaved);
 
     final result = wasSaved
@@ -112,21 +105,29 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
     if (!result.success) {
       setState(() => _hasSaved = wasSaved);
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(result.message ?? 'Could not update saved job'),
-        ),
+        SnackBar(content: Text(result.message ?? 'Could not update saved job')),
       );
       return;
     }
-
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(
-          result.saved ? 'Job saved' : 'Removed from saved',
-        ),
+        content: Text(result.saved ? 'Job saved' : 'Removed from saved'),
         backgroundColor: result.saved ? AppColors.success : null,
       ),
     );
+  }
+
+  Future<void> _shareJob() async {
+    if (_job == null) return;
+    
+    final text = 'Check out this job on JobConnect!\n\n'
+        'Role: ${_job!.title}\n'
+        'Company: ${_job!.companyName}\n'
+        'Location: ${_job!.location}\n'
+        'Salary: ${_job!.salary}\n\n'
+        'Apply now on JobConnect.';
+        
+    await SharePlus.instance.share(ShareParams(text: text));
   }
 
   @override
@@ -161,11 +162,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.error_outline,
-                size: 48,
-                color: AppColors.danger,
-              ),
+              const Icon(Icons.error_outline, size: 48, color: AppColors.danger),
               const SizedBox(height: 12),
               Text('Could not load job', style: AppTextStyles.h3),
               const SizedBox(height: 6),
@@ -240,15 +237,13 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
                   ),
                 );
               } else if (value == 'share') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Sharing is not enabled yet')),
-                );
+                _shareJob();
               }
             },
             itemBuilder: (context) => [
               const PopupMenuItem(
                 value: 'share',
-                child: Text('Share'),
+                child: Text('Share Job'),
               ),
               const PopupMenuItem(
                 value: 'report',
@@ -303,22 +298,14 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
         children: [
           _headerLogo(job),
           const SizedBox(height: 14),
-          Text(
-            job.title,
-            textAlign: TextAlign.center,
-            style: AppTextStyles.h2,
-          ),
+          Text(job.title, textAlign: TextAlign.center, style: AppTextStyles.h2),
           const SizedBox(height: 4),
           Text(job.companyName, style: AppTextStyles.bodyMuted),
           const SizedBox(height: 8),
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(
-                Icons.location_on_outlined,
-                size: 14,
-                color: AppColors.textMuted,
-              ),
+              const Icon(Icons.location_on_outlined, size: 14, color: AppColors.textMuted),
               const SizedBox(width: 4),
               Text(
                 job.location.isEmpty ? 'Location not set' : job.location,
@@ -337,11 +324,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(
-                    Icons.schedule,
-                    size: 13,
-                    color: AppColors.warning,
-                  ),
+                  const Icon(Icons.schedule, size: 13, color: AppColors.warning),
                   const SizedBox(width: 4),
                   Text(
                     'Apply by ${_formatDate(job.applicationDeadline!)}',
@@ -401,10 +384,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
   }
 
   String _formatDate(DateTime date) {
-    const months = [
-      'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
-      'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
-    ];
+    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     return '${months[date.month - 1]} ${date.day}, ${date.year}';
   }
 
@@ -501,9 +481,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
           Text('About this Job', style: AppTextStyles.h3),
           const SizedBox(height: 10),
           Text(
-            job.description.isEmpty
-                ? 'No description provided.'
-                : job.description,
+            job.description.isEmpty ? 'No description provided.' : job.description,
             style: AppTextStyles.body.copyWith(height: 1.5, fontSize: 13),
           ),
           if (job.responsibilities.isNotEmpty) ...[
@@ -531,7 +509,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
         .where((l) => l.isNotEmpty)
         .map((l) => l.replaceFirst(RegExp(r'^[-*\u2022]\s*'), ''))
         .toList();
-
     if (lines.isEmpty) {
       return [
         Padding(
@@ -540,7 +517,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
         ),
       ];
     }
-
     return lines.map(_bullet).toList();
   }
 
@@ -579,7 +555,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
     final location = company['location'] as String? ?? '';
     final about = company['about'] as String? ?? '';
     final website = company['website'] as String? ?? '';
-    final foundedYear = company['foundedYear'] as int?;
 
     return SingleChildScrollView(
       child: Column(
@@ -615,10 +590,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      [
-                        if (industry.isNotEmpty) industry,
-                        if (size.isNotEmpty) size,
-                      ].join('  \u00B7  '),
+                      [if (industry.isNotEmpty) industry, if (size.isNotEmpty) size].join('  \u00B7  '),
                       style: AppTextStyles.small.copyWith(fontSize: 12),
                     ),
                   ],
@@ -639,8 +611,6 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
           if (location.isNotEmpty) _bullet('Headquarters: $location'),
           if (industry.isNotEmpty) _bullet('Industry: $industry'),
           if (size.isNotEmpty) _bullet('Company size: $size'),
-          if (foundedYear != null && foundedYear > 0)
-            _bullet('Founded: $foundedYear'),
           if (website.isNotEmpty) _bullet('Website: $website'),
           const SizedBox(height: 16),
         ],
@@ -670,17 +640,11 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Text(
-            'Reviews will be available in a later phase',
-            style: AppTextStyles.small.copyWith(fontSize: 12),
-          ),
           const SizedBox(height: 16),
           Text(
-            'Company reviews are a planned feature. For now, this tab shows placeholder content.',
+            'Reviews are a planned feature for a future update.',
             style: AppTextStyles.body.copyWith(height: 1.5, fontSize: 13),
           ),
-          const SizedBox(height: 16),
         ],
       ),
     );
@@ -700,8 +664,7 @@ class _JobDetailsScreenState extends State<JobDetailsScreen>
         child: ElevatedButton(
           onPressed: applied || _applying ? null : _submitApplication,
           style: ElevatedButton.styleFrom(
-            backgroundColor:
-                applied ? AppColors.textMuted : AppColors.primary,
+            backgroundColor: applied ? AppColors.textMuted : AppColors.primary,
           ),
           child: _applying
               ? const SizedBox(
