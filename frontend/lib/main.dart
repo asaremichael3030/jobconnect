@@ -32,7 +32,6 @@ class JobConnectApp extends StatelessWidget {
       initialRoute: '/',
       onGenerateRoute: (settings) {
         // Handle deep link from password reset email
-        // The email link looks like: https://jobconnect11.netlify.app/#/reset-password?token=eyJ...
         if (settings.name != null && settings.name!.startsWith('/reset-password')) {
           final uri = Uri.parse(settings.name!);
           final token = uri.queryParameters['token'];
@@ -76,6 +75,21 @@ class _SplashScreenState extends State<SplashScreen> {
   Future<void> _bootstrap() async {
     await Future.delayed(const Duration(milliseconds: 800));
 
+    // 1. CHECK FOR DEEP LINK FIRST
+    // On Flutter Web, the URL hash is stored in Uri.base.fragment
+    final fragment = Uri.base.fragment;
+    if (fragment.contains('reset-password')) {
+      // Extract the token from the URL (e.g., /reset-password?token=123)
+      final uri = Uri.parse(fragment);
+      final token = uri.queryParameters['token'] ?? '';
+      
+      if (mounted) {
+        Navigator.pushReplacementNamed(context, '/reset-password?token=$token');
+      }
+      return; // Stop execution so it doesn't redirect to login!
+    }
+
+    // 2. NORMAL SESSION CHECK
     final hasSession = await AuthService.hasSession();
 
     if (!hasSession) {
